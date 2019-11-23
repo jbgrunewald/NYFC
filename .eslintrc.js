@@ -1,10 +1,10 @@
 module.exports = {
   env: {
-    browser: true,
     es6: true,
   },
   extends: [
-    'airbnb-base',
+    "airbnb",
+    "plugin:jest/recommended",
   ],
   globals: {
     Atomics: 'readonly',
@@ -16,4 +16,5 @@ module.exports = {
   },
   rules: {
   },
+  plugins: ['jest']
 };

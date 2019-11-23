@@ -17,15 +17,25 @@
   },
   "homepage": "https://github.com/jbgrunewald/spider#readme",
   "dependencies": {
-    "puppeteer": "^1.20.0"
+    "collections": "^5.1.9",
+    "eslint-plugin-jest": "^23.0.4",
+    "esm": "^3.2.25",
+    "puppeteer": "^1.20.0",
+    "request": "^2.88.0",
+    "save-dev": "0.0.1-security",
+    "xml-stream": "^0.4.5"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.7.4",
+    "babel-eslint": "^8.2.6",
     "eslint": "^6.5.1",
     "eslint-config-airbnb": "^18.0.1",
     "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-babel": "^5.1.0",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
     "eslint-plugin-react": "^7.16.0",
-    "eslint-plugin-react-hooks": "^1.7.0"
+    "eslint-plugin-react-hooks": "^1.7.0",
+    "jest": "^24.9.0"
   }
 }
