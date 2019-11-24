@@ -1,13 +1,16 @@
 import fs from 'fs';
 import path from 'path';
+import request from 'request';
 import getSitemapUrls from './getSitemapUrls';
 import expectedUrlsFromXmlSitemap from './testData/expectedUrlsFromXmlSitemap';
 
-const mockLoader = (filePath) => () => fs.createReadStream(filePath);
+jest.mock('request');
 
 describe('#siteMapParser', () => {
   it('should extract urls from xml sitemap', async () => {
-    const result = await getSitemapUrls('testDomain', { loader: mockLoader(path.join(__dirname, 'testData', 'exampleXmlSitemap.xml')) });
-    expect(result).toEqual(expectedUrlsFromXmlSitemap);
+    const filePath = path.join(__dirname, 'testData', 'exampleXmlSitemap.xml');
+    request.mockReturnValue(fs.createReadStream(filePath));
+    const result = await getSitemapUrls('www.starbucks.co.jp');
+    expect(result).toEqual(expect.arrayContaining(expectedUrlsFromXmlSitemap));
   });
 });
