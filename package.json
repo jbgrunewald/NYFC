@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/jbgrunewald/spider#readme",
   "dependencies": {
+    "@google-cloud/logging-winston": "^3.0.1",
     "collections": "^5.1.9",
     "eslint-plugin-jest": "^23.0.4",
     "esm": "^3.2.25",
@@ -24,6 +25,7 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
     "save-dev": "0.0.1-security",
+    "winston": "^3.2.1",
     "xml-stream": "^0.4.5"
   },
   "devDependencies": {
