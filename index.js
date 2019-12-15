@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
-import domainCrawler from './DomainCrawler';
 import logger from './logger';
+import domainCrawler from './DomainCrawler';
 
 const rootDomain = 'https://www.google.com';
 

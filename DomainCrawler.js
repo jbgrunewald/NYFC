@@ -15,19 +15,28 @@ const domainCrawler = (config) => {
   const urlQueue = [];
   const urlIterator = urlQueue[Symbol.iterator]();
   const pagesVisited = new Set();
-  const domainPaths = {};
+  const domainPaths = new Map();
+
+  const isRelativeUrl = (urlToTest) => urlToTest.charAt(0) === '/';
 
   const updateStateForUrl = (url) => {
     const parsedUrl = new URL(url);
     const urlWithoutParams = `${parsedUrl.protocol}${parsedUrl.host}${parsedUrl.path}`;
-    if (domainPaths[urlWithoutParams]) {
-      domainPaths[urlWithoutParams].mergePathDetails(parsedUrl);
-    } else {
-      domainPaths[urlWithoutParams] = pathDetails({ url: parsedUrl });
+    if (!domainPaths.has(urlWithoutParams)) {
+      domainPaths.set(urlWithoutParams, pathDetails());
     }
+    domainPaths.get(urlWithoutParams).mergePathDetails(parsedUrl);
     if (!pagesVisited.has(urlWithoutParams) && parsedUrl.hostname.includes(domain)) {
       urlQueue.push(urlWithoutParams);
     }
+  };
+
+  const updateStateForForm = (formDetails) => {
+    const fullUrl = isRelativeUrl(formDetails.action) ? `${domain}${formDetails.action}` : formDetails.action;
+    if (!domainPaths.has(fullUrl)) {
+      domainPaths.set(fullUrl, pathDetails());
+    }
+    domainPaths.get(fullUrl).mergeFormDetails(formDetails, fullUrl);
   };
 
   const processSitemapUrls = async () => {
@@ -35,7 +44,31 @@ const domainCrawler = (config) => {
     urls.forEach((url) => updateStateForUrl(url));
   };
 
-  const extractLinksFromUrl = async () => {
+  const extractElementAttributes = (ele) => {
+    ele.evaluate((node) => {
+      const attributeMap = {};
+
+      node.getAttributeNames()
+        .forEach((attr) => {
+          attributeMap[attr] = node.getAttribute(attr);
+        });
+      return attributeMap;
+    });
+  };
+
+  const extractFormsFromPage = async () => {
+    const forms = await page.$$('form');
+    return Promise.all(forms.map(async (form) => {
+      const formDetails = await extractElementAttributes(form);
+      const inputs = await form.$$('input');
+      formDetails.inputs = await Promise.all(
+        inputs.map((input) => extractElementAttributes(input)),
+      );
+      return formDetails;
+    }));
+  };
+
+  const extractDetailsFromUrl = async () => {
     const targetUrl = urlIterator.next().value;
     if (targetUrl === undefined) return targetUrl;
     try {
@@ -50,6 +83,8 @@ const domainCrawler = (config) => {
       urls
         .filter((url) => url !== '')
         .forEach((url) => updateStateForUrl(url));
+      const forms = await extractFormsFromPage();
+      forms.forEach((form) => updateStateForForm(form));
     } catch (e) {
       logger.error(`error processing page for url ${targetUrl} from page ${e}`);
     }
@@ -61,7 +96,7 @@ const domainCrawler = (config) => {
     domainPaths,
     crawlDomain: async () => {
       await processSitemapUrls();
-      await asyncRepeat(extractLinksFromUrl);
+      await asyncRepeat(extractDetailsFromUrl);
     },
   };
 };
