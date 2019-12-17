@@ -1,6 +1,6 @@
 import request from 'request';
 import XmlStream from 'xml-stream';
-
+import logger from '../logger';
 /**
  * Try to retrieve a sitemap and extract the urls
  * Works on nested sitemaps
@@ -10,6 +10,7 @@ import XmlStream from 'xml-stream';
  * @return {Set<string>} all urls found from the sitemap
  */
 const getSitemapUrls = async (url, urlSet = new Set()) => {
+  logger.info(`getting sitemap urls for ${url}, currently found ${urlSet.size} urls`);
   const promises = [];
   const response = request(url);
   const parser = new XmlStream(response);

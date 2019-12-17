@@ -14,9 +14,9 @@ const pathDetails = () => {
   const paramsMap = new Map();
 
   const mergeQueryParams = (urlToMerge) => {
-    if (url === '') url = `${urlToMerge.protocol}${urlToMerge.host}${urlToMerge.path}`;
+    if (url === '') url = `${urlToMerge.protocol}//${urlToMerge.host}${urlToMerge.pathname}`;
     methods.add('GET');
-    logger.info(`merging the search parameters for ${url.host}${url.path} from url ${urlToMerge.toString()}`);
+    logger.info(`[pathDetails][mergeQueryParams] merging the search parameters for ${url}`);
     urlToMerge.searchParams.forEach((value, name) => {
       if (!paramsMap.has(name)) {
         paramsMap.set(name, new Set());

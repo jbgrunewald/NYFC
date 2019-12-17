@@ -12,6 +12,7 @@ import logger from './logger';
  */
 const domainCrawler = (config) => {
   const { page, domain } = config;
+  const domainHostName = new URL(domain).host;
   const urlQueue = [];
   const urlIterator = urlQueue[Symbol.iterator]();
   const pagesVisited = new Set();
@@ -21,12 +22,13 @@ const domainCrawler = (config) => {
 
   const updateStateForUrl = (url) => {
     const parsedUrl = new URL(url);
-    const urlWithoutParams = `${parsedUrl.protocol}${parsedUrl.host}${parsedUrl.path}`;
+    const urlWithoutParams = `${parsedUrl.protocol}//${parsedUrl.host}${parsedUrl.pathname}`;
     if (!domainPaths.has(urlWithoutParams)) {
       domainPaths.set(urlWithoutParams, pathDetails());
     }
     domainPaths.get(urlWithoutParams).mergePathDetails(parsedUrl);
-    if (!pagesVisited.has(urlWithoutParams) && parsedUrl.hostname.includes(domain)) {
+    if (!pagesVisited.has(urlWithoutParams) && parsedUrl.hostname === domainHostName) {
+      logger.info(`[domainCrawler][updateStateForUrl] adding ${urlWithoutParams} to queue`);
       urlQueue.push(urlWithoutParams);
     }
   };
@@ -40,8 +42,9 @@ const domainCrawler = (config) => {
   };
 
   const processSitemapUrls = async () => {
-    const urls = await getSitemapUrls(domain);
+    const urls = await getSitemapUrls(`${domain}/sitemap.xml`);
     urls.forEach((url) => updateStateForUrl(url));
+    return urls;
   };
 
   const extractElementAttributes = (ele) => {
@@ -95,7 +98,8 @@ const domainCrawler = (config) => {
   return {
     domainPaths,
     crawlDomain: async () => {
-      await processSitemapUrls();
+      const sitemapResults = await processSitemapUrls();
+      logger.info(`found the following sitemap urls: ${JSON.stringify(sitemapResults.size)}`);
       await asyncRepeat(extractDetailsFromUrl);
     },
   };

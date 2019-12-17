@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import logger from './logger';
-import domainCrawler from './DomainCrawler';
+import domainCrawler from './domainCrawler';
 
 const rootDomain = 'https://www.google.com';
 
@@ -21,8 +21,10 @@ const rootDomain = 'https://www.google.com';
 (async () => {
   const browser = await puppeteer.launch({ headless: false, slowMo: 250 });
   logger.info(`starting crawl for domain ${rootDomain}`);
-  const crawler = domainCrawler({ page: browser.newPage(), domain: rootDomain });
+  const page = await browser.newPage();
+  const crawler = domainCrawler({ page, domain: rootDomain });
   await crawler.crawlDomain();
-  logger.info(`crawl completed and found the following paths for the domain ${JSON.stringify(crawler.domainPaths)}`);
+  crawler.domainPaths.values().forEach((value) => console.log(JSON.stringify(value)));
+  logger.info(`crawl completed for the domain ${rootDomain}`);
   // Here's where we'll want to put them into a queue
 })();
