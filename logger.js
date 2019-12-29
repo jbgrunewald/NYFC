@@ -14,18 +14,17 @@ const logger = createLogger({
     format.json(),
   ),
   defaultMeta: { service: 'spider' },
-  transports: [
-    loggingWinston,
-  ],
 });
 
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new transports.Console({
     format: format.combine(
       format.colorize(),
-      format.simple()
-    )
+      format.simple(),
+    ),
   }));
+} else {
+  logger.add(loggingWinston);
 }
 
 export default logger;
