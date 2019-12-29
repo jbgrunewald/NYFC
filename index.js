@@ -22,9 +22,13 @@ const rootDomain = 'https://www.google.com';
   const browser = await puppeteer.launch({ headless: false, slowMo: 250 });
   logger.info(`starting crawl for domain ${rootDomain}`);
   const page = await browser.newPage();
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
   const crawler = domainCrawler({ page, domain: rootDomain });
+  const startTime = Date.now();
   await crawler.crawlDomain();
-  crawler.domainPaths.values().forEach((value) => console.log(JSON.stringify(value)));
-  logger.info(`crawl completed for the domain ${rootDomain}`);
+  const endTime = Date.now();
+  crawler.domainPaths.values().forEach((value) => logger.info(JSON.stringify(value)));
+  const elapsedTime = endTime - startTime / 1000;
+  logger.info(`crawl completed for the domain ${rootDomain} and took ${elapsedTime}`);
   // Here's where we'll want to put them into a queue
 })();
