@@ -10,16 +10,17 @@ import logger from '../logger';
  * @return {Set<string>} all urls found from the sitemap
  */
 const getSitemapUrls = async (url, urlSet = new Set()) => {
-  logger.info(`getting sitemap urls for ${url}, currently found ${urlSet.size} urls`);
+  logger.info(`getting sitemap urls for ${url}`);
   const promises = [];
   const response = request(url);
   const parser = new XmlStream(response);
-  parser.on('endElement: url', (data) => {
-    const { loc: siteUrl } = data;
-    if (siteUrl) {
-      urlSet.add(siteUrl);
-    }
-  });
+  parser
+    .on('endElement: url', (data) => {
+      const { loc: siteUrl } = data;
+      if (siteUrl) {
+        urlSet.add(siteUrl);
+      }
+    });
 
   parser.on('endElement: sitemap', async (data) => {
     const { loc: siteUrl } = data;
@@ -28,9 +29,13 @@ const getSitemapUrls = async (url, urlSet = new Set()) => {
     }
   });
 
+  parser.on('error', (err) => {
+    logger.warn(`unable to parse the stream to get the sitemap urls: ${err}`);
+  });
+
   await new Promise((res) => parser.on('end', res));
   await Promise.all(promises);
-
+  logger.info(`[getSitemapUrls] completed processing urls from ${url}, we currently have ${urlSet.size} urls`);
   return urlSet;
 };
 
