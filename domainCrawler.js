@@ -14,7 +14,6 @@ const domainCrawler = (config) => {
   const { page, domain } = config;
   const domainHostName = new URL(domain).host;
   const urlQueue = [];
-  const urlIterator = urlQueue[Symbol.iterator]();
   const pagesVisited = new Set();
   const domainPaths = new Map();
 
@@ -23,22 +22,32 @@ const domainCrawler = (config) => {
   const updateStateForUrl = (url) => {
     const parsedUrl = new URL(url);
     const urlWithoutParams = `${parsedUrl.protocol}//${parsedUrl.host}${parsedUrl.pathname}`;
-    if (!domainPaths.has(urlWithoutParams)) {
-      domainPaths.set(urlWithoutParams, pathDetails());
-    }
-    domainPaths.get(urlWithoutParams).mergePathDetails(parsedUrl);
-    if (!pagesVisited.has(urlWithoutParams) && parsedUrl.hostname === domainHostName) {
-      logger.info(`[domainCrawler][updateStateForUrl] adding ${urlWithoutParams} to queue`);
-      urlQueue.push(urlWithoutParams);
+    if (parsedUrl.hostname === domainHostName) {
+      if (!domainPaths.has(urlWithoutParams)) {
+        domainPaths.set(urlWithoutParams, pathDetails());
+      }
+      domainPaths.get(urlWithoutParams).mergePathDetails(parsedUrl);
+
+      if (!pagesVisited.has(urlWithoutParams)) {
+        logger.info(`[domainCrawler][updateStateForUrl] adding ${urlWithoutParams} to queue`);
+        urlQueue.push(urlWithoutParams);
+      }
     }
   };
 
-  const updateStateForForm = (formDetails) => {
-    const fullUrl = isRelativeUrl(formDetails.action) ? `${domain}${formDetails.action}` : formDetails.action;
-    if (!domainPaths.has(fullUrl)) {
-      domainPaths.set(fullUrl, pathDetails());
+  const updateStateForForm = (formDetails, targetUrl) => {
+    try {
+      let fullUrl = targetUrl;
+      if (formDetails.action) {
+        fullUrl = isRelativeUrl(formDetails.action) ? `${domain}${formDetails.action}` : formDetails.action;
+      }
+      if (!domainPaths.has(fullUrl)) {
+        domainPaths.set(fullUrl, pathDetails());
+      }
+      domainPaths.get(fullUrl).mergeFormDetails(formDetails, fullUrl);
+    } catch (e) {
+      logger.error(`[domainCrawler][updateStateForForm] unable to process form details ${JSON.stringify(formDetails)}: ${e.message} ${e.stack}`);
     }
-    domainPaths.get(fullUrl).mergeFormDetails(formDetails, fullUrl);
   };
 
   const processSitemapUrls = async () => {
@@ -47,17 +56,15 @@ const domainCrawler = (config) => {
     return urls;
   };
 
-  const extractElementAttributes = (ele) => {
-    ele.evaluate((node) => {
-      const attributeMap = {};
+  const extractElementAttributes = (ele) => ele.evaluate((node) => {
+    const attributeMap = {};
 
-      node.getAttributeNames()
-        .forEach((attr) => {
-          attributeMap[attr] = node.getAttribute(attr);
-        });
-      return attributeMap;
-    });
-  };
+    node.getAttributeNames()
+      .forEach((attr) => {
+        attributeMap[attr] = node.getAttribute(attr);
+      });
+    return attributeMap;
+  });
 
   const extractFormsFromPage = async () => {
     const forms = await page.$$('form');
@@ -72,13 +79,15 @@ const domainCrawler = (config) => {
   };
 
   const extractDetailsFromUrl = async () => {
-    const targetUrl = urlIterator.next().value;
+    const targetUrl = urlQueue.pop();
     if (targetUrl === undefined) return targetUrl;
     try {
-      logger.info(`processing ${targetUrl}`);
+      logger.info(`processing ${targetUrl} the queue currently has ${urlQueue.length} urls remaining`);
       pagesVisited.add(targetUrl);
       const referrer = domain;
-      await page.goto(targetUrl, { referrer, waitUntil: ['load', 'networkidle0'] });
+      await page.goto(targetUrl, {
+        referrer, waitUntil: ['load', 'networkidle0'],
+      });
       const elements = await page.$$('a');
       const urls = await Promise.all(
         elements.map(async (ele) => page.evaluate((elem) => elem.href, ele)),
@@ -87,20 +96,20 @@ const domainCrawler = (config) => {
         .filter((url) => url !== '')
         .forEach((url) => updateStateForUrl(url));
       const forms = await extractFormsFromPage();
-      forms.forEach((form) => updateStateForForm(form));
+      forms.forEach((form) => updateStateForForm(form, targetUrl));
     } catch (e) {
-      logger.error(`error processing page for url ${targetUrl} from page ${e}`);
+      logger.error(`error processing page for url ${targetUrl}: ${e.message} ${e.stack}`);
     }
 
     return targetUrl;
   };
 
   return {
-    domainPaths,
     crawlDomain: async () => {
       const sitemapResults = await processSitemapUrls();
       logger.info(`found the following sitemap urls: ${JSON.stringify(sitemapResults.size)}`);
       await asyncRepeat(extractDetailsFromUrl);
+      return Array.from(domainPaths.values());
     },
   };
 };
