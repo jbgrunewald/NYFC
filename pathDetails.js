@@ -16,7 +16,7 @@ const pathDetails = () => {
   const mergeQueryParams = (urlToMerge) => {
     if (url === '') url = `${urlToMerge.protocol}//${urlToMerge.host}${urlToMerge.pathname}`;
     methods.add('GET');
-    logger.info(`[pathDetails][mergeQueryParams] merging the search parameters for ${url}`);
+    logger.info(`[pathDetails][mergeQueryParams] merging the search parameters for ${urlToMerge.href} into root ${url}`);
     urlToMerge.searchParams.forEach((value, name) => {
       if (!paramsMap.has(name)) {
         paramsMap.set(name, new Set());
@@ -34,9 +34,17 @@ const pathDetails = () => {
     formInputs = formInputs.concat(formToMerge.inputs);
   };
 
+  const getDetails = () => ({
+    url,
+    methods,
+    formInputs,
+    paramsMap,
+  });
+
   return {
     mergePathDetails,
     mergeFormDetails,
+    getDetails,
   };
 };
 

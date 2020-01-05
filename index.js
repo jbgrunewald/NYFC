@@ -25,10 +25,13 @@ const rootDomain = 'https://www.google.com/';
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
   const crawler = domainCrawler({ page, domain: rootDomain });
   const startTime = Date.now();
-  const domainsFound = await crawler.crawlDomain();
-  logger.info(`we found the following domains: ${JSON.stringify(domainsFound)}`);
+  const pathsFound = await crawler.crawlDomain();
+  pathsFound.forEach((path) => {
+    logger.info(`we found the following domains: ${JSON.stringify(path.getDetails())}`);
+  });
   const endTime = Date.now();
   const elapsedTime = (endTime - startTime) / 1000;
-  logger.info(`crawl completed for the domain ${rootDomain} and took ${elapsedTime}`);
+  logger.info(`crawl completed for the domain ${rootDomain} and took ${elapsedTime} seconds`);
+  browser.close();
   // Here's where we'll want to put them into a queue
 })();

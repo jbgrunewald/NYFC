@@ -3,6 +3,14 @@ import pathDetails from './pathDetails';
 import { asyncRepeat } from './repeat';
 import logger from './logger';
 
+const checkMemoryConsumption = () => {
+  const used = process.memoryUsage();
+  Object.entries(used).forEach((entry) => {
+    const [key, value] = entry;
+    logger.info(`[${key}]: ${Math.round(value / 1024 / 1024 * 100) / 100} MB`);
+  });
+};
+
 /**
  * This is the main entry point for crawling a domain
  * and aggregating the data we retrieve.
@@ -80,6 +88,7 @@ const domainCrawler = (config) => {
 
   const extractDetailsFromUrl = async () => {
     const targetUrl = urlQueue.pop();
+    checkMemoryConsumption();
     if (targetUrl === undefined) return targetUrl;
     try {
       logger.info(`processing ${targetUrl} the queue currently has ${urlQueue.length} urls remaining`);
@@ -106,6 +115,7 @@ const domainCrawler = (config) => {
 
   return {
     crawlDomain: async () => {
+      updateStateForUrl(domain);
       const sitemapResults = await processSitemapUrls();
       logger.info(`found the following sitemap urls: ${JSON.stringify(sitemapResults.size)}`);
       await asyncRepeat(extractDetailsFromUrl);
