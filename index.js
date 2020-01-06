@@ -26,9 +26,12 @@ const rootDomain = 'https://www.google.com/';
   const crawler = domainCrawler({ page, domain: rootDomain });
   const startTime = Date.now();
   const pathsFound = await crawler.crawlDomain();
-  pathsFound.forEach((path) => {
-    logger.info(`we found the following domains: ${JSON.stringify(path.getDetails())}`);
+  logger.info(`we found ${pathsFound.length} paths for the domain ${rootDomain}`);
+  const filteredPaths = pathsFound.filter((path) => {
+    const { formInputs, paramsMap } = path.getDetails();
+    return formInputs.length || paramsMap.size;
   });
+  logger.info(`we found ${filteredPaths.length} potential attacks paths for the domain ${rootDomain}`);
   const endTime = Date.now();
   const elapsedTime = (endTime - startTime) / 1000;
   logger.info(`crawl completed for the domain ${rootDomain} and took ${elapsedTime} seconds`);

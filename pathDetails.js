@@ -7,16 +7,16 @@ import logger from './logger';
  *
  * @return {{mergePathDetails: mergePathDetails}}
  */
-const pathDetails = () => {
-  let url = '';
+const pathDetails = (urlWithoutParams) => {
+  const url = urlWithoutParams;
   const methods = new Set();
+  methods.add('GET');
   let formInputs = [];
   const paramsMap = new Map();
+  let visited = false;
 
   const mergeQueryParams = (urlToMerge) => {
-    if (url === '') url = `${urlToMerge.protocol}//${urlToMerge.host}${urlToMerge.pathname}`;
-    methods.add('GET');
-    logger.info(`[pathDetails][mergeQueryParams] merging the search parameters for ${urlToMerge.href} into root ${url}`);
+    logger.debug(`[pathDetails][mergeQueryParams] merging the search parameters for ${urlToMerge.href} into root ${url}`);
     urlToMerge.searchParams.forEach((value, name) => {
       if (!paramsMap.has(name)) {
         paramsMap.set(name, new Set());
@@ -45,6 +45,7 @@ const pathDetails = () => {
     mergePathDetails,
     mergeFormDetails,
     getDetails,
+    visited,
   };
 };
 

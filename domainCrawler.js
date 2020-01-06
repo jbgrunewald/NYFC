@@ -22,7 +22,6 @@ const domainCrawler = (config) => {
   const { page, domain } = config;
   const domainHostName = new URL(domain).host;
   const urlQueue = [];
-  const pagesVisited = new Set();
   const domainPaths = new Map();
 
   const isRelativeUrl = (urlToTest) => urlToTest.charAt(0) === '/';
@@ -32,11 +31,12 @@ const domainCrawler = (config) => {
     const urlWithoutParams = `${parsedUrl.protocol}//${parsedUrl.host}${parsedUrl.pathname}`;
     if (parsedUrl.hostname === domainHostName) {
       if (!domainPaths.has(urlWithoutParams)) {
-        domainPaths.set(urlWithoutParams, pathDetails());
+        domainPaths.set(urlWithoutParams, pathDetails(urlWithoutParams));
       }
-      domainPaths.get(urlWithoutParams).mergePathDetails(parsedUrl);
+      const path = domainPaths.get(urlWithoutParams);
+      path.mergePathDetails(parsedUrl);
 
-      if (!pagesVisited.has(urlWithoutParams)) {
+      if (path.visited) {
         logger.info(`[domainCrawler][updateStateForUrl] adding ${urlWithoutParams} to queue`);
         urlQueue.push(urlWithoutParams);
       }
@@ -92,7 +92,7 @@ const domainCrawler = (config) => {
     if (targetUrl === undefined) return targetUrl;
     try {
       logger.info(`processing ${targetUrl} the queue currently has ${urlQueue.length} urls remaining`);
-      pagesVisited.add(targetUrl);
+      domainPaths.get(targetUrl).visited = true;
       const referrer = domain;
       await page.goto(targetUrl, {
         referrer, waitUntil: ['load', 'networkidle0'],
