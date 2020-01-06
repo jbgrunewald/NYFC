@@ -1,4 +1,3 @@
-import puppeteer from 'puppeteer';
 import logger from './logger';
 import domainCrawler from './domainCrawler';
 
@@ -19,11 +18,8 @@ const rootDomain = 'https://www.google.com/';
  * been visited, we will publish each path for further evaluation/testing.
  */
 (async () => {
-  const browser = await puppeteer.launch({ headless: true });
   logger.info(`starting crawl for domain ${rootDomain}`);
-  const page = await browser.newPage();
-  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
-  const crawler = domainCrawler({ page, domain: rootDomain });
+  const crawler = await domainCrawler({ pageLimit: 32, domain: rootDomain });
   const startTime = Date.now();
   const pathsFound = await crawler.crawlDomain();
   pathsFound.forEach((path) => {
@@ -32,6 +28,5 @@ const rootDomain = 'https://www.google.com/';
   const endTime = Date.now();
   const elapsedTime = (endTime - startTime) / 1000;
   logger.info(`crawl completed for the domain ${rootDomain} and took ${elapsedTime} seconds`);
-  browser.close();
   // Here's where we'll want to put them into a queue
 })();

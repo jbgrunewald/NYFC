@@ -21,6 +21,7 @@
     "collections": "^5.1.9",
     "eslint-plugin-jest": "^23.0.4",
     "esm": "^3.2.25",
+    "pidusage": "^2.0.17",
     "puppeteer": "^1.20.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
