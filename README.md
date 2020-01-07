@@ -1,3 +1,7 @@
+[![Version](https://img.shields.io/npm/v/nyfc.svg)](https://npmjs.org/package/nyfc)
+[![Downloads/week](https://img.shields.io/npm/dw/nyfc.svg)](https://npmjs.org/package/nyfc)
+[![License](https://img.shields.io/npm/l/nyfc.svg)](https://github.com/https://github.com/jbgrunewald/NYFC/https://github.com/jbgrunewald/NYFC/blob/master/package.json)
+
 # Not Your Friendly Crawler
 An open source tool for crawling all websites using puppeteer. The purpose of using
 puppeteer is to have a single tool that will work for both traditional and more
