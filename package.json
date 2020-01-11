@@ -1,6 +1,6 @@
 {
   "name": "nyfc",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A security testing oriented crawler built with puppeteer",
   "main": "index.js",
   "scripts": {

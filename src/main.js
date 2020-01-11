@@ -1,1 +1,4 @@
-export runCrawl from './runCrawl';
+import runCrawl from './runCrawl';
+import domainCrawler from './domainCrawler';
+
+export { runCrawl, domainCrawler };
