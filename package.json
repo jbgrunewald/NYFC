@@ -2,7 +2,7 @@
   "name": "nyfc",
   "version": "0.0.1",
   "description": "A security testing oriented crawler built with puppeteer",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

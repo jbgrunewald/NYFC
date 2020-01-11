@@ -86,7 +86,7 @@ const domainCrawler = async (config) => {
       const inputs = await form.$$('input');
       formDetails.inputs = await Promise.all(
         inputs.map((input) => extractElementAttributes(input)),
-      );gi
+      );
       return formDetails;
     }));
   };
