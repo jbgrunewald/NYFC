@@ -8,8 +8,9 @@ import domainCrawler from './domainCrawler';
  */
 (async () => {
   const rootDomain = process.argv[2];
+  const limit = process.argv[3];
   logger.info(`starting crawl for domain ${rootDomain}`);
-  const crawler = await domainCrawler({ domain: rootDomain });
+  const crawler = await domainCrawler({ domain: rootDomain, pageLimit: limit });
   const startTime = Date.now();
   const pathsFound = await crawler.crawlDomain();
   logger.info(`we found ${pathsFound.length} paths for the domain ${rootDomain}`);

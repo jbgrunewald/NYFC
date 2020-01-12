@@ -41,7 +41,7 @@ const domainCrawler = async (config) => {
       const path = domainPaths.get(urlWithoutParams);
       path.mergePathDetails(parsedUrl);
 
-      if (path.visited) {
+      if (!path.visited) {
         logger.info(`[domainCrawler][updateStateForUrl] adding ${urlWithoutParams} to queue`);
         urlQueue.push(urlWithoutParams);
       }
