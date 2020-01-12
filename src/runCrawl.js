@@ -3,9 +3,8 @@ import domainCrawler from './domainCrawler';
 
 /**
  * The function will crawl the domain and store all information for
- * paths found on that domain.
- * @param {string} rootDomain the full root domain, including the protocal
- * @return {Promise<void>}
+ * paths found on that domain. This CLI tool uses argv to get a fully
+ * formed URL, ex. https://www.google.com
  */
 (async () => {
   const rootDomain = process.argv[2];
