@@ -19,8 +19,8 @@ const checkMemoryConsumption = (pid) => {
  * This is the main entry point for crawling a domain
  * and aggregating the data we retrieve.
  * @param {Object} config
- * @param {Object} config.page the puppeteer page object
- * @param {string} config.domain
+ * @param {number} config.pageLimit the puppeteer page object
+ * @param {string} config.domain a fully qualified url for the domain
  */
 const domainCrawler = async (config) => {
   const browser = await puppeteer.launch({ headless: true });
