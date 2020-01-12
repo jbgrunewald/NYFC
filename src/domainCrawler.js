@@ -1,14 +1,18 @@
+import puppeteer from 'puppeteer';
+import pidusage from 'pidusage';
 import getSitemapUrls from './sitemap/getSitemapUrls';
 import pathDetails from './pathDetails';
-import { asyncRepeat } from './repeat';
+import { sleep } from './repeat';
 import logger from './logger';
 
-const checkMemoryConsumption = () => {
+const checkMemoryConsumption = (pid) => {
   const used = process.memoryUsage();
   Object.entries(used).forEach((entry) => {
     const [key, value] = entry;
     logger.info(`[${key}]: ${Math.round(value / 1024 / 1024 * 100) / 100} MB`);
   });
+
+  pidusage(pid, (err, stats) => logger.info(`puppeteer is using ${JSON.stringify(stats)}`));
 };
 
 /**
@@ -18,8 +22,9 @@ const checkMemoryConsumption = () => {
  * @param {Object} config.page the puppeteer page object
  * @param {string} config.domain
  */
-const domainCrawler = (config) => {
-  const { page, domain } = config;
+const domainCrawler = async (config) => {
+  const browser = await puppeteer.launch({ headless: true });
+  const { domain = '', pageLimit = 1 } = config;
   const domainHostName = new URL(domain).host;
   const urlQueue = [];
   const domainPaths = new Map();
@@ -36,7 +41,7 @@ const domainCrawler = (config) => {
       const path = domainPaths.get(urlWithoutParams);
       path.mergePathDetails(parsedUrl);
 
-      if (path.visited) {
+      if (!path.visited) {
         logger.info(`[domainCrawler][updateStateForUrl] adding ${urlWithoutParams} to queue`);
         urlQueue.push(urlWithoutParams);
       }
@@ -74,7 +79,7 @@ const domainCrawler = (config) => {
     return attributeMap;
   });
 
-  const extractFormsFromPage = async () => {
+  const extractFormsFromPage = async (page) => {
     const forms = await page.$$('form');
     return Promise.all(forms.map(async (form) => {
       const formDetails = await extractElementAttributes(form);
@@ -86,16 +91,17 @@ const domainCrawler = (config) => {
     }));
   };
 
-  const extractDetailsFromUrl = async () => {
+  const extractDetailsFromUrl = async (page) => {
     const targetUrl = urlQueue.pop();
-    checkMemoryConsumption();
-    if (targetUrl === undefined) return targetUrl;
     try {
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
       logger.info(`processing ${targetUrl} the queue currently has ${urlQueue.length} urls remaining`);
       domainPaths.get(targetUrl).visited = true;
       const referrer = domain;
       await page.goto(targetUrl, {
-        referrer, waitUntil: ['load', 'networkidle0'],
+        referrer,
+        waitUntil: ['networkidle0'],
+        timeout: 60000,
       });
       const elements = await page.$$('a');
       const urls = await Promise.all(
@@ -104,13 +110,12 @@ const domainCrawler = (config) => {
       urls
         .filter((url) => url !== '')
         .forEach((url) => updateStateForUrl(url));
-      const forms = await extractFormsFromPage();
+      const forms = await extractFormsFromPage(page);
       forms.forEach((form) => updateStateForForm(form, targetUrl));
     } catch (e) {
       logger.error(`error processing page for url ${targetUrl}: ${e.message} ${e.stack}`);
     }
-
-    return targetUrl;
+    await page.close();
   };
 
   return {
@@ -118,7 +123,25 @@ const domainCrawler = (config) => {
       updateStateForUrl(domain);
       const sitemapResults = await processSitemapUrls();
       logger.info(`found the following sitemap urls: ${JSON.stringify(sitemapResults.size)}`);
-      await asyncRepeat(extractDetailsFromUrl);
+      const promises = [];
+
+      while (urlQueue.length !== 0) {
+        // eslint-disable-next-line no-await-in-loop
+        const openPages = await browser.pages();
+        logger.info(`there are currently ${openPages.length} open`);
+        if (openPages.length >= pageLimit) {
+          checkMemoryConsumption(browser.process().pid);
+          // eslint-disable-next-line no-await-in-loop
+          await sleep(1000);
+        } else {
+          // eslint-disable-next-line no-await-in-loop
+          const page = await browser.newPage();
+          promises.push(extractDetailsFromUrl(page));
+        }
+      }
+
+      await Promise.all(promises);
+      browser.close();
       return Array.from(domainPaths.values());
     },
   };
